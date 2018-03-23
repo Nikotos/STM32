@@ -301,7 +301,7 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
             switch(user_button_state)
                 {
                     case USER_BUTTON_RELEASED :
-                        if ((edge == RISING) && (abs(TIME - user_button_timestamp) > 0))
+                        if ((edge == RISING) && (abs(TIME - user_button_timestamp) > 15))
                         {
 
                             user_button_state = USER_BUTTON_PRESSED;
@@ -312,7 +312,7 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
 
 
                     case USER_BUTTON_PRESSED :
-                        if((edge == FALLING) && (abs(TIME - user_button_timestamp) > 0))
+                        if((edge == FALLING) && (abs(TIME - user_button_timestamp) > 15))
                         {
                             user_button_state = USER_BUTTON_RELEASED;
                             user_button_timestamp = TIME;
@@ -328,7 +328,7 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
       case LEFT_BUTTON :
         {
             static enum BUTTON_STATES left_button_state =  BUTTON_STATES_DEFAULT;
-            static int left_button_timestamp = 0;
+            static uint64_t left_button_timestamp = 0;
             switch(left_button_state)
               {
                   case LEFT_BUTTON_RELEASED :
@@ -357,7 +357,7 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
       case RIGHT_BUTTON :
         {
             static enum BUTTON_STATES right_button_state =  BUTTON_STATES_DEFAULT;
-            static int right_button_timestamp = 0;
+            static uint64_t right_button_timestamp = 0;
             switch(right_button_state)
               {
                   case RIGHT_BUTTON_RELEASED :
