@@ -3,6 +3,8 @@
 
 //=========================================================
 /* enums for exti_finite_state_machine */
+
+
 enum BUTTON_STATES
 {
   USER_BUTTON_RELEASED = 0,
@@ -69,6 +71,7 @@ void exti_finite_state_machine(enum EDGE edge, enum BUTTONS button);
 /* Finite State Machine for our Alarm */
 void alarm_finite_state_machine(enum BUTTON_STATES button_state);
 
+/* Finite State Machine for Tuning mode for ssour Alarm */
 void tune_finite_state_machine(enum BUTTON_STATES button_state);
 
 
@@ -76,7 +79,7 @@ void tune_finite_state_machine(enum BUTTON_STATES button_state);
 /* TIME of ALARM!!!! */
 uint64_t TIME_X = 500000000;
 
-/* variable to make noise during ALARMING!!!! */
+/* variable to make noise during ALARMING!!!  */
 enum ALARM_STATES global_alarm_state = CLOCK;
 
 //===============================================================================

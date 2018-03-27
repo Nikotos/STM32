@@ -3,38 +3,52 @@
 
 
 //==========================================================================
+//
+//  Initialisation of User Button
+//
+//
+//==========================================================================
 void
-UserButton_Init(void) {
-        /* Enable the BUTTON Pin Clock */
+UserButton_Init(void)
+{
+
+        /* Enable the BUTTON Pin Clocking */
         LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
 
-        /* Configure button Pin, Expclicit setting NO PULL MODE  */
+        /* Configure button Pin, Expclicit setting NO PULL MODE, because of external pull */
         LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_0, LL_GPIO_MODE_INPUT);
         LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_0, LL_GPIO_PULL_NO);
 
+        /* Enable clocking to SYSCFG*/
         LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_SYSCFG);
 
-        /* Connecting PA0 to EXTI0 Line  */
+        /* Connecting PA0 to EXTI0 (interruption) Line  */
         LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE0);
 
         /* Set Pending bit to 1   */
         LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_0);
 
-
-        /* Set interruption to fallling from 1 to 0 */
+        /* Set interruption to fallling and rising*/
         LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_0);
         LL_EXTI_EnableFallingTrig_0_31(LL_EXTI_LINE_0);
 
-
+        /* configurating handler (Nested Vector Interrupt controller) */
         NVIC_EnableIRQ(EXTI0_1_IRQn);
         NVIC_SetPriority(EXTI0_1_IRQn, 0);
 }
 
+
+//==========================================================================
+//
+//  Initialisation of Left Button
+//
+//
+//=========================================================================
 void
 FirstButton_Init(void) {
 
         /* Activating and configurating button pin */
-        LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_13, LL_GPIO_MODE_INPUT);    // First button
+        LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_13, LL_GPIO_MODE_INPUT);
         LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_13, LL_GPIO_PULL_DOWN);
 
         /* Enable clocking to SYSCFG */
@@ -56,6 +70,13 @@ FirstButton_Init(void) {
 
 }
 
+
+//==========================================================================
+//
+//  Initialisation of Right button
+//
+//
+//=========================================================================
 void
 SecondButton_Init(void) {
 
@@ -86,7 +107,14 @@ SecondButton_Init(void) {
 
 }
 
-/*button interrupt handler*/
+//==========================================================================
+//
+//  @descr IRQ Handler for EXTI0 and EXTI1 Lines
+//         We use this handler only for User Button (EXTI0)
+//
+//
+//  @note just calling exti_finite_state_machine()
+//==========================================================================
 void
 EXTI0_1_IRQHandler(void)
 {
@@ -100,7 +128,14 @@ EXTI0_1_IRQHandler(void)
 
 
 
-/* One Handler for lines form 4 to 15*/
+//=================================================================================
+//
+//  @descr IRQ Handler for Lines from EXTI4 to EXTI15
+//         We use this handler for Left Button (EXTI13) and Right Button (EXTI14)
+//
+//
+//  @note just calling exti_finite_state_machine() with different arguments
+//=================================================================================
 void
 EXTI4_15_IRQHandler(void)
 {
@@ -126,6 +161,17 @@ EXTI4_15_IRQHandler(void)
     }
 }
 
+
+//=================================================================================
+//
+//  @descr Finite State Machine for Exti, Heart of this project
+//         Swithches between Buttons and its States
+//         Finite state realisation for convenience
+//         And to avoid battle rattling
+//
+//
+//  @note call alarm_finite_state_machine with different conditions
+//=================================================================================
 void
 exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
 {
@@ -141,14 +187,12 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
 
                     case USER_BUTTON_RELEASED :
                         if ((edge == RISING) && (abs(TIME - user_button_timestamp) > 50))
-                        {
-                            /* situation when we notice, that button is pressed, but dont know type of press*/
-
-                            user_button_state = USER_BUTTON_PRESSED;
-                            user_button_timestamp = TIME;
-                            user_button_press_time = TIME;
-
-                        }
+                          {
+                              /* situation when we notice, that button is pressed, but dont know type of press*/
+                              user_button_state = USER_BUTTON_PRESSED;
+                              user_button_timestamp = TIME;
+                              user_button_press_time = TIME;
+                          }
                         break;
 
 
@@ -156,14 +200,16 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
                         if((edge == FALLING) && (abs(TIME - user_button_timestamp) > 50))
                         {
                             /* situaton, when button is pressed for a long time*/
-                            if (abs(TIME - user_button_press_time) > 250) {
-                                alarm_finite_state_machine(USER_BUTTON_LONG_PRESSED);
-                            }
+                            if (abs(TIME - user_button_press_time) > 250)
+                              {
+                                  alarm_finite_state_machine(USER_BUTTON_LONG_PRESSED);
+                              }
 
                             /* situaton, when button is usually pressed*/
-                            else {
-                                alarm_finite_state_machine(USER_BUTTON_PRESSED);
-                            }
+                            else
+                              {
+                                  alarm_finite_state_machine(USER_BUTTON_PRESSED);
+                              }
 
                             user_button_state = USER_BUTTON_RELEASED;
                             user_button_timestamp = TIME;
@@ -189,12 +235,12 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
 
                   case LEFT_BUTTON_RELEASED :
                       if ((edge == RISING) && (abs(TIME - left_button_timestamp) > 50))
-                      {
-                          /* situation when we notice, that button is pressed*/
-                          left_button_state = LEFT_BUTTON_PRESSED;
-                          left_button_timestamp = TIME;
-                          left_button_press_time = TIME;
-                      }
+                        {
+                            /* situation when we notice, that button is pressed*/
+                            left_button_state = LEFT_BUTTON_PRESSED;
+                            left_button_timestamp = TIME;
+                            left_button_press_time = TIME;
+                        }
                       break;
 
 
@@ -202,13 +248,15 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
                       if((edge == FALLING) && (abs(TIME - left_button_timestamp) > 50))
                       {
                           /* situaton, when button is pressed for a long time*/
-                          if (abs(TIME - left_button_press_time) > 250) {
-                              alarm_finite_state_machine(LEFT_BUTTON_LONG_PRESSED);
-                          }
+                          if (abs(TIME - left_button_press_time) > 250)
+                            {
+                                alarm_finite_state_machine(LEFT_BUTTON_LONG_PRESSED);
+                            }
                           /* situaton, when button is usually pressed*/
-                          else {
-                              alarm_finite_state_machine(LEFT_BUTTON_PRESSED);
-                          }
+                          else
+                            {
+                                alarm_finite_state_machine(LEFT_BUTTON_PRESSED);
+                            }
 
                           left_button_state = LEFT_BUTTON_RELEASED;
                           left_button_timestamp = TIME;
@@ -231,12 +279,12 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
               {
                   case RIGHT_BUTTON_RELEASED :
                       if ((edge == RISING) && (abs(TIME - right_button_timestamp) > 50))
-                      {
-                          /* situation when we notice, that button is pressed*/
-                          right_button_state = RIGHT_BUTTON_PRESSED;
-                          right_button_timestamp = TIME;
-                          right_button_press_time = TIME;
-                      }
+                        {
+                            /* situation when we notice, that button is pressed*/
+                            right_button_state = RIGHT_BUTTON_PRESSED;
+                            right_button_timestamp = TIME;
+                            right_button_press_time = TIME;
+                        }
                       break;
 
 
@@ -244,13 +292,15 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
                       if((edge == FALLING) && (abs(TIME - right_button_timestamp) > 50))
                       {
                           /* situaton, when button is pressed for a long time*/
-                          if(abs(TIME - right_button_press_time) > 250){
-                              alarm_finite_state_machine(RIGHT_BUTTON_LONG_PRESSED);
-                          }
+                          if(abs(TIME - right_button_press_time) > 250)
+                            {
+                                alarm_finite_state_machine(RIGHT_BUTTON_LONG_PRESSED);
+                            }
                           /* situaton, when button is usually pressed*/
-                          else {
-                              alarm_finite_state_machine(RIGHT_BUTTON_PRESSED);
-                          }
+                          else
+                            {
+                                alarm_finite_state_machine(RIGHT_BUTTON_PRESSED);
+                            }
                           right_button_state = RIGHT_BUTTON_RELEASED;
                           right_button_timestamp = TIME;
                           right_button_press_time = 0;
@@ -269,6 +319,17 @@ exti_finite_state_machine(enum EDGE edge, enum BUTTONS button)
     }
 }
 
+
+//==============================================================================================
+//
+//  @descr Finite State Machine for Alarm, ane more heart (but such smaller) of this project
+//         Swithches between States of Alarm
+//         finite state realisation for convenience
+//
+//
+//
+//  @note calls tune_finite_state_machine where it is nececary
+//==============================================================================================
 void
 alarm_finite_state_machine(enum BUTTON_STATES button_state)
 {
@@ -279,32 +340,45 @@ alarm_finite_state_machine(enum BUTTON_STATES button_state)
           case CLOCK :
             {
                 if (button_state == USER_BUTTON_LONG_PRESSED)
-                {
-                    TIME_X = 0;
-                    alarm_state = TUNE;
-                }
+                  {
+                      TIME_X = 0;
+                      alarm_state = TUNE;
+                  }
             }
             break;
 
           case TUNE :
             {
                 if (button_state == USER_BUTTON_LONG_PRESSED)
-                {
-                    alarm_state = CLOCK;
-                }
+                  {
+                      alarm_state = CLOCK;
+                  }
                 else
-                {
-                    tune_finite_state_machine(button_state);
-                }
+                  {
+                      tune_finite_state_machine(button_state);
+                  }
             }
             break;
 
           case ALARM :
             {
                 if (button_state == USER_BUTTON_PRESSED)
-                {
-                    alarm_state  = CLOCK;
-                }
+                  {
+                      alarm_state  = CLOCK;
+                  }
+
+                /* set Alarm at 10 Min later*/
+                if (button_state == RIGHT_BUTTON_PRESSED)
+                  {
+                      TIME_X += 10*60*1000;
+                      alarm_state = CLOCK;
+                  }
+
+                /* set Alarm at 5 Min later*/
+                if (button_state == LEFT_BUTTON_PRESSED)
+                  {
+                      TIME_X += 5*60*1000;
+                  }
             }
             break;
 
@@ -315,10 +389,19 @@ alarm_finite_state_machine(enum BUTTON_STATES button_state)
 }
 
 
+
+//==============================================================================================
+//
+//  @descr Finite State Machine for Tune mode of Alarm
+//         Swithches between States of Tuning
+//         finite state realisation for convenience
+//
+//
+//==============================================================================================
 void
 tune_finite_state_machine(enum BUTTON_STATES button_state)
 {
-  static enum TUNE_STATES tune_state = TUNE_HOUR;
+  static enum TUNE_STATES tune_state = TUNE_MINUTE;
   switch (tune_state)
     {
         case TUNE_MINUTE :
@@ -365,6 +448,7 @@ tune_finite_state_machine(enum BUTTON_STATES button_state)
             while(1);
     }
 }
+
 
 //===============================================================
 #endif //BUTTONS_HANDLER_C

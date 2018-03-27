@@ -149,6 +149,16 @@ PendSV_Handler(void) {
 /* time, which will be displayed */
 uint64_t display_time = 0;
 
+
+
+//==============================================================================================
+//
+//  @descr System Timer Handler
+//          
+//
+//  @note here we make ringing during ALARM mode
+//        and updating numders at our display
+//==============================================================================================
 void
 SysTick_Handler(void)
  {
